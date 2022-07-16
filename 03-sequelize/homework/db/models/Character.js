@@ -4,16 +4,30 @@ module.exports = sequelize => {
   sequelize.define('Character', {
     code: {
       type: DataTypes.STRING(5),
-      primaryKey: true
+      primaryKey: true,
+      validate: {
+        isnotHenry(value){
+          if(value.toLowerCase() === 'henry'){
+            throw new Error('Not conbination of Henry characters is allowed')
+          }
+        }
+      }
       
     },
     name : {
       type: DataTypes.STRING,
       allowNull:false,
-      unique:true
+      unique:true,
+      validate: {
+        notIn: [["Henry", "SoyHenry","Soy Henry"]]
+      }
     },
     age:{
-      type: DataTypes.INTEGER
+      type: DataTypes.INTEGER,
+      get(){
+        const value = this.getDataValue('age')
+        return value ? `${value} years old` : null
+      }
     },
     race:{
       type:DataTypes.ENUM(

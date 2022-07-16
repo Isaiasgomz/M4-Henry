@@ -2,6 +2,9 @@ const { Router } = require('express');
 const { Op, Character, Role } = require('../db');
 const router = Router();
 
+
+
+
 router.post('/', async (req,res)=>{
     const {code,name, hp ,mana} = req.body
     if(!code || ! name || !hp || !mana) {
@@ -16,14 +19,19 @@ router.post('/', async (req,res)=>{
 })
 
 
+
+
+
+
 router.get('/', async (req,res) =>{
-    const {race} = req.query
+    const {race, age } = req.query
     let CharacterFiltered;
     try {
-        if(race){
+        if(race || age){
            CharacterFiltered = await Character.findAll({
                 where:{
                     race,
+                    age,
                 }
             })
             
@@ -38,6 +46,39 @@ router.get('/', async (req,res) =>{
 })
 
 
+
+
+
+router.get('/young', async (req,res) =>{
+    try {
+        const find = await Character.findAll({
+            where:{
+                age:{ [Op.lt]: 25}
+            }
+        })
+        res.json(find)
+    } catch (error) {
+       console.log(error) 
+    }
+})
+
+router.get('/roles/:code' ,async (req,res)=>{
+    const {code} = req.params
+    try {
+        const find =  Character.findByPk(code, {
+           inlcude: Role
+        })
+        if(find) {
+            res.json(find)
+        }
+    } catch (error) {
+        console.log(error)
+    }   
+})
+
+
+
+
 router.get('/:code', async (req,res) =>{
     const {code} =req.params
     try {
@@ -49,6 +90,36 @@ router.get('/:code', async (req,res) =>{
         }
     } catch (error) {
         res.status(404).json(`Hubo un error: ${error}`)
+    }
+})
+
+
+router.put('/addAbilities', async (req,res) =>{
+    const {codeCharacter, abilities} = req.body
+    try {
+        const find = await Character.findByPk(codeCharacter)
+        if(find){
+            const arrayPromises = abilities.map(abilitie => Character.createAblity(abilitie))
+            await Promise.all(arrayPromises)
+            res.json('done')
+        }
+        
+    } catch (error) {
+        console.log(error)
+    }
+})
+
+
+router.put('/:attribute', async (req,res)=>{
+    try {
+        const {attribute} = req.params
+        const {value} = req.query
+        await Character.update({[attribute]: value}, {where:{
+            [attribute]: null
+        }})
+        res.json('Personajes actualizados')
+    } catch (error) {
+        console.log(error)
     }
 })
 
